@@ -1,0 +1,106 @@
+﻿@inject WaiterProxy Proxy
+
+<table class="waiter">
+    <tr><td><h3>@Name</h3></td></tr>
+    <tr>
+        <td>
+            <label class="switch">
+                <input type="checkbox" value="@IsActive" @onchange="CheckChanged" />
+                <span class="slider"></span>
+            </label>
+        </td>
+    </tr>
+</table>
+
+@code {
+
+    [Parameter]
+    public string Name { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnWaiteringCallback { get; set; }
+
+    public bool IsActive { get; set; }
+
+    private Timer ActivityTimer { get; set; }
+    private Random Randomizer = new Random();
+
+    public Waiter()
+    {
+        IsActive = false;
+    }
+
+    public async Task CheckChanged()
+    {
+        IsActive = !IsActive;
+
+        if (IsActive)
+        {
+            await OnWaiteringCallback.InvokeAsync($"{Name} starts working at Moe's Tavern!");
+            ActivityTimer = new Timer { Interval = 5000, Enabled = true, AutoReset = false };
+            ActivityTimer.Elapsed += DoWaitering;
+        }
+        else
+        {
+            await OnWaiteringCallback.InvokeAsync($"{Name} is finishing up.");
+            ActivityTimer.Enabled = false;
+            await OnWaiteringCallback.InvokeAsync($"{Name} stops working at Moe's Tavern!");
+        }
+    }
+
+    private void DoWaitering(object sender, ElapsedEventArgs e)
+    {
+        Task.Run(() => DoWaiteringAsync());
+    }
+
+    private async Task DoWaiteringAsync()
+    {
+        await OnWaiteringCallback.InvokeAsync($"{Name} is getting the next order.");
+        Order nextOrder = await Proxy.GetNextOrderAsync();
+
+        if (nextOrder == null)
+        {
+            await OnWaiteringCallback.InvokeAsync($"{Name} didn't find new orders.");
+
+            int waiterAction = Randomizer.Next(0, 5);
+
+            string activity = waiterAction switch
+            {
+                1 => $"{Name} is doing some dishes.",
+                2 => $"{Name} runs for the bathroom.",
+                3 => $"{Name} goes outside to have a smoke.",
+                4 => $"{Name} nips of their drink.",
+                _ => $"{Name} is talking to the customers."
+            };
+
+            await OnWaiteringCallback.InvokeAsync(activity);
+        }
+        else
+        {
+            Drink drink = nextOrder.Drinks?.FirstOrDefault();
+
+            if (drink == null)
+            {
+                await OnWaiteringCallback.InvokeAsync($"{Name}: Well I can't do much with this.");
+            }
+            else
+            {
+                await OnWaiteringCallback.InvokeAsync($"{Name} Preparing {drink.Name} for {drink.OrderedFor}.");
+                await Task.Delay(1000);
+
+                int poisonedBeerRatio = Randomizer.Next(0, 100);
+
+                if (poisonedBeerRatio > 80)
+                {
+                    drink.Name = $"Spoiled {drink.Name}";
+                    await OnWaiteringCallback.InvokeAsync($"{Name}: Created a SPOILED {drink.Name} without knowing it!");
+                }
+
+                await Proxy.ServeDrinkAsync(drink);
+                await OnWaiteringCallback.InvokeAsync($"{Name}: Alright another soul served!");
+            }
+        }
+
+        ActivityTimer.Enabled = true;
+    }
+}

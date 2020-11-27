@@ -1,0 +1,105 @@
+﻿@inject CustomerProxy Proxy
+
+<div>
+    <div class="row">
+        <h3>@Name</h3>
+    </div>
+    <div class="row">
+        <label class="switch">
+            <input type="checkbox" value="@IsActive" @onchange="CheckChanged" />
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="row">
+        <input type="button" value="Order a drink" @onclick="OrderADrink" disabled="@IsInActive" />
+    </div>
+    <div class="row">
+        <input type="button" value="Round on me" @onclick="OrderARound" disabled="@IsInActive" />
+    </div>
+    <div class="row">
+        <input type="button" value="Ad fundum" @onclick="DoAnAdFundum" disabled="@IsInActive" />
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public string Name { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnCustomerCallback { get; set; }
+
+    public bool IsActive { get; set; }
+    public bool IsInActive => !IsActive;
+
+    public Customer()
+    {
+        IsActive = false;
+    }
+
+    public async Task CheckChanged()
+    {
+        IsActive = !IsActive;
+
+        if (IsActive)
+        {
+            await Proxy.TakeASeatAsync(Name);
+            await OnCustomerCallback.InvokeAsync($"{Name} has taken a seat at the Azure Service Bar.");
+        }
+        else
+        {
+            await Proxy.LeaveBarAsync(Name);
+            await OnCustomerCallback.InvokeAsync($"{Name} has left the Azure Service Bar.");
+        }
+    }
+
+    public async Task OrderADrink()
+    {
+        if (IsInActive)
+        {
+            return;
+        }
+
+        var order = new Order { Drinks = new[] { new Drink { Name = "Beer", OrderedFor = Name } } };
+
+        await Proxy.SendOrderAsync(order);
+        await OnCustomerCallback.InvokeAsync($"{Name}: Can I have another {order.Drinks[0].Name} please?");
+    }
+
+    public async Task OrderARound()
+    {
+        if (IsInActive)
+        {
+            return;
+        }
+
+        var order = new Order { Drinks = new[] { new Drink { Name = "Beer", OrderedFor = "Everyone" } } };
+
+        await Proxy.SendOrderAsync(order);
+        await OnCustomerCallback.InvokeAsync($"{Name}: {order.Drinks[0].Name} for everyone!");
+    }
+
+    public async Task DoAnAdFundum()
+    {
+        if (IsInActive)
+        {
+            return;
+        }
+
+        await OnCustomerCallback.InvokeAsync($"{Name} is going for an ad fundum!");
+        Drink drink = await Proxy.GetNextDrinkAsync(Name);
+
+        if (drink == null)
+        {
+            await OnCustomerCallback.InvokeAsync($"{Name}: Hey who stole my beer?");
+        }
+        else if(string.IsNullOrEmpty(drink?.Name) || drink.Name.Contains("spoiled", StringComparison.OrdinalIgnoreCase))
+        {
+            await OnCustomerCallback.InvokeAsync($"{Name}: EEEW This one's SPOILED!");
+        }
+        else
+        {
+            await OnCustomerCallback.InvokeAsync($"{Name}: BUUUUUURP!");
+        }
+    }
+}
