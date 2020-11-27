@@ -1,0 +1,15 @@
+<section class="gallery-block grid-gallery">
+  <div class="container">
+    <div class="heading">
+      <h2>{{category}} Gallery</h2>
+      <button type="button" class="btn btn-outline-primary" (click)="downloadZip$.next()">Download Gallery</button>
+    </div>
+    <div class="row">
+      <div class="col-md-6 col-lg-4 item" *ngFor="let blob of blobs$ | async">
+        <a class="lightbox" (click)="download$.next(blob.name)">
+          <img class="img-fluid image scale-on-hover" [src]="blob.url">
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
