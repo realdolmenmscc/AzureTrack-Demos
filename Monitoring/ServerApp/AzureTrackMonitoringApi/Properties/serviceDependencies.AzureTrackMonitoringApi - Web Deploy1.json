@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "mssql1": {
+      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Sql/servers/azuretrackmonitoring/databases/azuretrackmonitoringdemo",
+      "type": "mssql.azure",
+      "connectionId": "demo",
+      "secretStore": "AzureAppSettings"
+    }
+  }
+}
