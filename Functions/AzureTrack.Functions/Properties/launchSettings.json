@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "AzureTrack.Functions": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "APPINSIGHTS_INSTRUMENTATIONKEY": "d2974a45-95e5-4f2b-9b8f-32968b8c51e6"
+      }
+    }
+  }
+}

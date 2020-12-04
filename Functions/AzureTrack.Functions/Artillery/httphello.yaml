@@ -1,0 +1,12 @@
+config:
+    target: https://azuretrack.azurewebsites.net/api/HttpHello
+    phases:
+        - duration: 30
+          arrivalCount: 1000
+    defaults:
+        headers:
+            x-functions-key: '{{ $processEnvironment.AzureTrack_API_KEY }}'
+scenarios:
+    - flow:
+          - post:
+                url: '/'
